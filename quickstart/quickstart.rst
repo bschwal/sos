@@ -1,5 +1,5 @@
 SOS Quick Start
-###########################
+=================
 
 Introduction
 *****************
@@ -19,11 +19,11 @@ Configuration Options
 **********************
 
 * --disable-python
-       * The python commands for managing and querying SOS will not be build
+        * The python commands for managing and querying SOS will not be built
 * --enable-doc
-       * Man pages will be generated for SOS commands and API
+        * Man pages will be generated for SOS commands and API
 * --enable-html
-       * HTML documenation will be generated for SOS commands and API
+        * HTML documenation will be generated for SOS commands and API
 
 Compile Dependencies
 ********************
@@ -130,6 +130,7 @@ These files can be obtained from a clone of the wiki under the quickstart direct
      1703108908.000705,3501119766665329829,17326355104910386333,0.0,131928928.0...
 
 Creating a SOS container
+************************
 
 1. Create a container if you don't already have one:
 
@@ -251,8 +252,9 @@ Note that there is no data yet in the container (using sos_cmd):
  Records 0/0.
 
 Importing CSV data into a container
+***********************************
 
-4. Import the CSV data into the container:
+1. Import the CSV data into the container:
 
 .. code-block:: console
 
@@ -261,7 +263,7 @@ Importing CSV data into a container
  Created 1000 records
 
 
-5. You can monitor the progress from another window like this:
+2. You can monitor the progress from another window like this:
 
 .. code-block:: console
 
@@ -270,14 +272,14 @@ Importing CSV data into a container
 It will take less than a second for 1000 lines, but you can see progress during larger file loads.
 Querying data in a container
 
-6. Query for the data in a container:
+3. Query for the data in a container:
 
  a. Query all the data, using comp_time as an index, which will determine the output order
 .. code-block:: console
 
  > sos_cmd -C /dir/my-container -q -S meminfo_qs -X time_job_comp
  ...
- -------------------------------- ------------------ ... -------------------------------- 
+ -------------------------------- ------------------  -------------------------------- 
  Records 1000/1000.
 
 b. Query only for certain variables (also using an index):
@@ -329,7 +331,7 @@ d. Querying with multiple filters:
 
 
 DSOS Quickstart
-####################
+=================
 
 Introduction
 ***************
@@ -340,7 +342,7 @@ Dsosql
 ********
 
 For demonstration purposes, let's assume we have two nodes, node1 ande node2, with a SOS database at /storage/sos/database. 
-Our cluster configuration file, let's call it dsos.conf, would simply be
+Our cluster configuration file, let's call it dsos.conf, would simply be:
 
 .. code-block:: console
 

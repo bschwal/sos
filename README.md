@@ -22,7 +22,7 @@ SOS to support:
 
 Configuration Options:
 * --disable-python
-  * The python commands for managing and querying SOS will not be build
+  * The python commands for managing and querying SOS will not be built
 * --enable-doc
   * Man pages will be generated for SOS commands and API
 * --enable-html
