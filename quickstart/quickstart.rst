@@ -19,11 +19,11 @@ Configuration Options
 **********************
 
 * --disable-python
-        * The python commands for managing and querying SOS will not be built
+          * The python commands for managing and querying SOS will not be built
 * --enable-doc
-        * Man pages will be generated for SOS commands and API
+          * Man pages will be generated for SOS commands and API
 * --enable-html
-        * HTML documenation will be generated for SOS commands and API
+          * HTML documenation will be generated for SOS commands and API
 
 Compile Dependencies
 ********************
