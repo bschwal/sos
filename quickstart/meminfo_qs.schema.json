@@ -1,0 +1,126 @@
+{
+    "name" : "meminfo_qs",
+    "uuid": "33333333-3333-3333-3333-333333333333",
+    "attrs" : [
+	{ "name" : "timestamp",	"type" : "timestamp", "index" : {}  }
+,
+	{ "name" : "component_id",	"type" : "uint64",	"index" : {}  }
+,
+	{ "name" : "job_id",	"type" : "uint64",	"index" : {}  }
+,
+	{ "name" : "app_id",	"type" : "uint64" }
+,
+	{ "name" : "MemTotal",	"type" : "uint64" }
+,
+	{ "name" : "MemFree",	"type" : "uint64" }
+,
+	{ "name" : "MemAvailable",	"type" : "uint64" }
+,
+	{ "name" : "Buffers",	"type" : "uint64" }
+,
+	{ "name" : "Cached",	"type" : "uint64" }
+,
+	{ "name" : "SwapCached",	"type" : "uint64" }
+,
+	{ "name" : "Active",	"type" : "uint64" }
+,
+	{ "name" : "Inactive",	"type" : "uint64" }
+,
+	{ "name" : "Active(anon)",	"type" : "uint64" }
+,
+	{ "name" : "Inactive(anon)",	"type" : "uint64" }
+,
+	{ "name" : "Active(file)",	"type" : "uint64" }
+,
+	{ "name" : "Inactive(file)",	"type" : "uint64" }
+,
+	{ "name" : "Unevictable",	"type" : "uint64" }
+,
+	{ "name" : "Mlocked",	"type" : "uint64" }
+,
+	{ "name" : "SwapTotal",	"type" : "uint64" }
+,
+	{ "name" : "SwapFree",	"type" : "uint64" }
+,
+	{ "name" : "Dirty",	"type" : "uint64" }
+,
+	{ "name" : "Writeback",	"type" : "uint64" }
+,
+	{ "name" : "AnonPages",	"type" : "uint64" }
+,
+	{ "name" : "Mapped",	"type" : "uint64" }
+,
+	{ "name" : "Shmem",	"type" : "uint64" }
+,
+	{ "name" : "Slab",	"type" : "uint64" }
+,
+	{ "name" : "SReclaimable",	"type" : "uint64" }
+,
+	{ "name" : "SUnreclaim",	"type" : "uint64" }
+,
+	{ "name" : "KernelStack",	"type" : "uint64" }
+,
+	{ "name" : "PageTables",	"type" : "uint64" }
+,
+	{ "name" : "NFS_Unstable",	"type" : "uint64" }
+,
+	{ "name" : "Bounce",	"type" : "uint64" }
+,
+	{ "name" : "WritebackTmp",	"type" : "uint64" }
+,
+	{ "name" : "CommitLimit",	"type" : "uint64" }
+,
+	{ "name" : "Committed_AS",	"type" : "uint64" }
+,
+	{ "name" : "VmallocTotal",	"type" : "uint64" }
+,
+	{ "name" : "VmallocUsed",	"type" : "uint64" }
+,
+	{ "name" : "VmallocChunk",	"type" : "uint64" }
+,
+	{ "name" : "Percpu",	"type" : "uint64" }
+,
+	{ "name" : "HardwareCorrupted",	"type" : "uint64" }
+,
+	{ "name" : "AnonHugePages",	"type" : "uint64" }
+,
+	{ "name" : "CmaTotal",	"type" : "uint64" }
+,
+	{ "name" : "CmaFree",	"type" : "uint64" }
+,
+	{ "name" : "HugePages_Total",	"type" : "uint64" }
+,
+	{ "name" : "HugePages_Free",	"type" : "uint64" }
+,
+	{ "name" : "HugePages_Rsvd",	"type" : "uint64" }
+,
+	{ "name" : "HugePages_Surp",	"type" : "uint64" }
+,
+	{ "name" : "Hugepagesize",	"type" : "uint64" }
+,
+	{ "name" : "DirectMap4k",	"type" : "uint64" }
+,
+	{ "name" : "DirectMap2M",	"type" : "uint64" }
+,
+	{ "name" : "DirectMap1G",	"type" : "uint64" }
+,
+        { "name" : "time_job_comp", "type" : "join", "join_attrs" : [ "timestamp", "job_id", "component_id"], 
+	"index" : {} }
+,
+        { "name" : "time_comp_job", "type" : "join", "join_attrs" : [ "timestamp", "component_id", "job_id"], 
+	"index" : {} }
+,
+        { "name" : "job_comp_time", "type" : "join", "join_attrs" : [ "job_id", "component_id", "timestamp" ],
+           "index" : {} }
+,
+        { "name" : "job_time_comp", "type" : "join", "join_attrs" : [ "job_id", "timestamp", "component_id" ],
+           "index" : {} }
+,
+        { "name" : "comp_time_job", "type" : "join", "join_attrs" : [ "component_id", "timestamp", "job_id"], 
+	"index" : {} }
+,
+        { "name" : "comp_job_time", "type" : "join", "join_attrs" : [ "component_id", "job_id", "timestamp" ],
+           "index" : {} }
+
+  ]
+}

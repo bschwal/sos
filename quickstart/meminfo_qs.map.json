@@ -1,0 +1,104 @@
+[
+	{ "target" : "timestamp", "source" : { "column" : 0 }}
+,
+	{ "target" : "component_id", "source" : { "column" : 1 }}
+,
+	{ "target" : "job_id", "source" : { "column" : 2 }}
+,
+	{ "target" : "app_id", "source" : { "column" : 3 }}
+,
+	{ "target" : "MemTotal", "source" : { "column" : 4 }}
+,
+	{ "target" : "MemFree", "source" : { "column" : 5 }}
+,
+	{ "target" : "MemAvailable", "source" : { "column" : 6 }}
+,
+	{ "target" : "Buffers", "source" : { "column" : 7 }}
+,
+	{ "target" : "Cached", "source" : { "column" : 8 }}
+,
+	{ "target" : "SwapCached", "source" : { "column" : 9 }}
+,
+	{ "target" : "Active", "source" : { "column" : 10 }}
+,
+	{ "target" : "Inactive", "source" : { "column" : 11 }}
+,
+	{ "target" : "Active(anon)", "source" : { "column" : 12 }}
+,
+	{ "target" : "Inactive(anon)", "source" : { "column" : 13 }}
+,
+	{ "target" : "Active(file)", "source" : { "column" : 14 }}
+,
+	{ "target" : "Inactive(file)", "source" : { "column" : 15 }}
+,
+	{ "target" : "Unevictable", "source" : { "column" : 16 }}
+,
+	{ "target" : "Mlocked", "source" : { "column" : 17 }}
+,
+	{ "target" : "SwapTotal", "source" : { "column" : 18 }}
+,
+	{ "target" : "SwapFree", "source" : { "column" : 19 }}
+,
+	{ "target" : "Dirty", "source" : { "column" : 20 }}
+,
+	{ "target" : "Writeback", "source" : { "column" : 21 }}
+,
+	{ "target" : "AnonPages", "source" : { "column" : 22 }}
+,
+	{ "target" : "Mapped", "source" : { "column" : 23 }}
+,
+	{ "target" : "Shmem", "source" : { "column" : 24 }}
+,
+	{ "target" : "Slab", "source" : { "column" : 25 }}
+,
+	{ "target" : "SReclaimable", "source" : { "column" : 26 }}
+,
+	{ "target" : "SUnreclaim", "source" : { "column" : 27 }}
+,
+	{ "target" : "KernelStack", "source" : { "column" : 28 }}
+,
+	{ "target" : "PageTables", "source" : { "column" : 29 }}
+,
+	{ "target" : "NFS_Unstable", "source" : { "column" : 30 }}
+,
+	{ "target" : "Bounce", "source" : { "column" : 31 }}
+,
+	{ "target" : "WritebackTmp", "source" : { "column" : 32 }}
+,
+	{ "target" : "CommitLimit", "source" : { "column" : 33 }}
+,
+	{ "target" : "Committed_AS", "source" : { "column" : 34 }}
+,
+	{ "target" : "VmallocTotal", "source" : { "column" : 35 }}
+,
+	{ "target" : "VmallocUsed", "source" : { "column" : 36 }}
+,
+	{ "target" : "VmallocChunk", "source" : { "column" : 37 }}
+,
+	{ "target" : "Percpu", "source" : { "column" : 38 }}
+,
+	{ "target" : "HardwareCorrupted", "source" : { "column" : 39 }}
+,
+	{ "target" : "AnonHugePages", "source" : { "column" : 40 }}
+,
+	{ "target" : "CmaTotal", "source" : { "column" : 41 }}
+,
+	{ "target" : "CmaFree", "source" : { "column" : 42 }}
+,
+	{ "target" : "HugePages_Total", "source" : { "column" : 43 }}
+,
+	{ "target" : "HugePages_Free", "source" : { "column" : 44 }}
+,
+	{ "target" : "HugePages_Rsvd", "source" : { "column" : 45 }}
+,
+	{ "target" : "HugePages_Surp", "source" : { "column" : 46 }}
+,
+	{ "target" : "Hugepagesize", "source" : { "column" : 47 }}
+,
+	{ "target" : "DirectMap4k", "source" : { "column" : 48 }}
+,
+	{ "target" : "DirectMap2M", "source" : { "column" : 49 }}
+,
+	{ "target" : "DirectMap1G", "source" : { "column" : 50 }}
+
+]
