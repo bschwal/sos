@@ -18,12 +18,12 @@ SOS implements its own back-end storage model. This allows SOS to support:
 Configuration Options
 **********************
 
-* --disable-python
-          * The python commands for managing and querying SOS will not be built
-* --enable-doc
-          * Man pages will be generated for SOS commands and API
-* --enable-html
-          * HTML documenation will be generated for SOS commands and API
+* \--disable-python
+        * The python commands for managing and querying SOS will not be built
+* \--enable-doc
+        * Man pages will be generated for SOS commands and API
+* \--enable-html
+        * HTML documenation will be generated for SOS commands and API
 
 Compile Dependencies
 ********************
@@ -37,7 +37,7 @@ Compile Dependencies
 
 Installation
 ****************
-The following will build SOS and numsos into the directory /home/XXX/BuildSos
+The following will build SOS and numsos into the directory /home/XXX/sos
 
 cd into the top level sos checkout directory
 
@@ -46,7 +46,7 @@ cd into the top level sos checkout directory
     ./autogen.sh # this will call autoreconf to generate `configure` script
     mkdir build
     cd build
-    ../configure --prefix=/home/XXX/BuildSos [--disable-python] [--enable-debug] \
+    ../configure --prefix=/home/XXX/sos [--disable-python] [--enable-debug] \
         [--enable-doc] [--enable-html]
     # add 'PYTHON=/PYTHON/EXECUTABLE/PATH' if PYTHON environment variable not set
     # add `--enable-debug` to turn on debugging logic inside the SOS libraries
@@ -54,14 +54,14 @@ cd into the top level sos checkout directory
     make && make install
 
 
-The build will result in /home/XXX/BuildSos/lib/python3.X/site-packages with sosdb and numsos modules. The sosdb module includes the DataSet class and also the Array and Sos modules, which are written in C for efficiency. The numsos module includes the DataSource, DataSink, Stack, and Transform classes.
+The build will result in /home/XXX/sos/lib/python3.X/site-packages with sosdb and numsos modules. The sosdb module includes the DataSet class and also the Array and Sos modules, which are written in C for efficiency. The numsos module includes the DataSource, DataSink, Stack, and Transform classes.
 
 Set the environment variables appropriately using: 
 
 .. code-block:: console
 
-  export PATH=/home/XXX/BuildSos/bin:$PATH
-  export PYTHONPATH=/home/XXX/BuildSos/lib/python3.X/site-packages:$PYTHONPATH
+  export PATH=/home/XXX/sos/bin:$PATH
+  export PYTHONPATH=/home/XXX/sos/lib/python3.X/site-packages:$PYTHONPATH
 
 Importing a CSV file and using the command line tools
 *********************************
@@ -81,7 +81,7 @@ Importing a CSV file and using the command line tools
       - sos-import-csv --csv 	
       - 1000 lines of CSV meminfo data 
 
-These files can be obtained from a clone of the wiki under the quickstart directory in the top level of the sos repo.
+These files can be obtained from /home/XXX/sos/quickstart along with these instructions.
 
 .. code-block:: console
 
