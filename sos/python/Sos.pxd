@@ -783,7 +783,7 @@ cdef extern from "sos/sos.h":
     int sos_filter_flags_set(sos_filter_t filt, sos_iter_flags_t flags)
     sos_iter_flags_t sos_filter_flags_get(sos_filter_t filt)
 
-cdef extern from "dsos.h":
+cdef extern from "dsos.h" nogil:
 
     cdef enum dsos_error:
         DSOS_ERR_OK,
@@ -838,6 +838,7 @@ cdef extern from "dsos.h":
     void dsos_container_close(dsos_container_t cont)
     void dsos_container_commit(dsos_container_t cont)
     dsos_container_t dsos_container_open(dsos_session_t sess, const char *path, sos_perm_t perm, int mode)
+    const char *dsos_container_path(dsos_container_t cont)
     int dsos_container_error(dsos_container_t cont, const char **err_msg)
     dsos_schema_t dsos_schema_create(dsos_container_t cont, sos_schema_t schema, dsos_res_t *res)
     dsos_name_array_t dsos_schema_query(dsos_container_t cont)
@@ -872,6 +873,7 @@ cdef extern from "dsos.h":
     int dsos_transaction_end(dsos_container_t cont)
     int dsos_obj_create(dsos_container_t cont, dsos_part_t part, dsos_schema_t schema, sos_obj_t obj)
     int dsos_obj_update(dsos_container_t cont, sos_obj_t obj)
+    int dsos_obj_delete(dsos_container_t cont, sos_obj_t obj)
     dsos_iter_t dsos_iter_create(dsos_container_t cont, dsos_schema_t schema, const char *attr_name)
     sos_obj_t dsos_iter_begin(dsos_iter_t iter)
     sos_obj_t dsos_iter_end(dsos_iter_t iter)

@@ -378,7 +378,6 @@ cdef class DsosSchema(Schema):
         Schema.__init__(self)
         self.dcont = cont
         self.c_dschema = <dsos_schema_t>NULL
-        self.dcont = None
 
     def attr_iter(self):
         return iter(self)
@@ -410,9 +409,9 @@ cdef class DsosContainer:
     cdef object session
     cdef dsos_container_t c_cont
     cdef dsos_session_t c_sess
-    cdef object path_
     cdef sos_perm_t o_perm
     cdef int o_mode
+    cdef int error
 
     cdef assign(self, dsos_container_t c_cont):
         self.c_cont = c_cont
@@ -440,7 +439,17 @@ cdef class DsosContainer:
 
     def path(self):
         """Return the container path/name"""
-        return self.path_
+        return dsos_container_path(self.c_cont)
+
+    def abort(self, error=None):
+        if error:
+            self.error = error
+        else:
+            self.error = errno
+        if self.error in libc_errno_str:
+            raise Exception(libc_errno_str[self.error])
+        else:
+            raise Exception("Error {0}".format[self.error])
 
     def close(self):
         """Close a container
@@ -695,15 +704,18 @@ cdef class DsosContainer:
         if wait_secs:
             tv.tv_secs = int(wait_secs)
             tv.tv_nsecs = 0
-            rc = dsos_transaction_begin(self.c_cont, &tv)
+            with nogil:
+                rc = dsos_transaction_begin(self.c_cont, &tv)
         else:
-            rc = dsos_transaction_begin(self.c_cont, NULL)
+            with nogil:
+                rc = dsos_transaction_begin(self.c_cont, NULL)
         if rc != 0:
             raise ValueError(f"Error {rc} attempting to start a transaction")
 
     def transaction_end(self):
         cdef int rc
-        rc = dsos_transaction_end(self.c_cont)
+        with nogil:
+            rc = dsos_transaction_end(self.c_cont)
         if rc != 0:
             raise ValueError(f"Error {rc} attempting to start a transaction")
 
@@ -741,6 +753,12 @@ cdef class DsosContainer:
         rc = dsos_obj_update(self.c_cont, obj.c_obj)
         if rc:
             raise RuntimeError(f"dsos_obj_update() error: {rc}")
+
+    def obj_delete(self, Object obj):
+        cdef int rc
+        rc = dsos_obj_delete(self.c_cont, obj.c_obj)
+        if rc:
+            raise RuntimeError(f"dsos_obj_delete() error: {rc}")
 
 
 cdef class DsosIterator:
@@ -2656,7 +2674,8 @@ cdef class AttrIter(SosObject):
         return False
 
     def find_sup(self, Key key):
-        """Same as 'find_ge()'
+        """Move iterator position to the object with the key attribute greater
+        than or equal to the given key
 
         Positional arguments:
         -- The key to search for
@@ -2666,7 +2685,7 @@ cdef class AttrIter(SosObject):
         False   Not found
 
         """
-        return self.find_ge()
+        return self.find_ge(key)
 
     def find_le(self, Key key):
         """Move iterator position to the object with the key attribute less than
@@ -2683,7 +2702,8 @@ cdef class AttrIter(SosObject):
 
 
     def find_inf(self, Key key):
-        """Same as 'find_le()'
+        """Move iterator position to the object with the key attribute less than
+        or equal to the given key
 
         Returns:
         True    Found

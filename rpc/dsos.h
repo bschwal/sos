@@ -52,6 +52,7 @@ extern dsos_session_t dsos_session_open(const char *config_file);
 extern void dsos_container_close(dsos_container_t cont);
 extern void dsos_container_commit(dsos_container_t cont);
 extern dsos_container_t dsos_container_open(dsos_session_t sess, const char *path, sos_perm_t perm, int mode);
+extern const char *dsos_container_path(dsos_container_t cont);
 extern int dsos_container_error(dsos_container_t cont, char **msg);
 extern dsos_schema_t dsos_schema_create(dsos_container_t cont, sos_schema_t schema, dsos_res_t *res);
 extern void dsos_schema_free(dsos_schema_t schema);
@@ -86,6 +87,7 @@ extern int dsos_transaction_end(dsos_container_t cont);
 extern int dsos_obj_create(dsos_container_t cont, dsos_part_t part,
 	dsos_schema_t schema, sos_obj_t obj);
 extern int dsos_obj_update(dsos_container_t cont, sos_obj_t obj);
+extern int dsos_obj_delete(dsos_container_t cont, sos_obj_t obj);
 extern sos_obj_t dsos_obj_new(dsos_schema_t schema);
 extern sos_obj_t dsos_obj_new_size(dsos_schema_t schema, size_t reserve);
 extern dsos_iter_t dsos_iter_create(dsos_container_t cont, dsos_schema_t schema, const char *attr_name);

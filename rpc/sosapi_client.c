@@ -185,6 +185,11 @@ typedef struct dsos_client_request_s {
 			int res;
 		} obj_update;
 
+		struct obj_delete_rqst_s {
+			dsos_obj_entry *obj_entry;
+			int res;
+		} obj_delete;
+
 		struct query_create_rqst_s {
 			dsos_query_t query;
 			dsos_query_options opts;
@@ -244,6 +249,7 @@ struct dsos_session_s {
 		ERROR
 	} state;
 	pthread_mutex_t lock;	/* Mutex across entire session */
+	pthread_cond_t  cond;	/* For busy/idle condition */
 };
 
 struct dsos_container_s {
@@ -990,6 +996,24 @@ static int send_request(dsos_client_t client, dsos_client_request_t rqst)
 			goto op_err;
 		}
 		break;
+	case REQ_OBJ_DELETE:
+		memset(&rqst->obj_delete.res, 0, sizeof(rqst->obj_delete.res));
+		pthread_mutex_lock(&client->rpc_lock);
+		rqst->rpc_err =
+			obj_delete_1(
+				rqst->obj_delete.obj_entry,
+				&rqst->obj_delete.res,
+				client->client);
+		pthread_mutex_unlock(&client->rpc_lock);
+		op_name = "obj_delete_1";
+		if (rqst->rpc_err != RPC_SUCCESS)
+			goto rpc_err;
+		if (rqst->obj_delete.res) {
+			g_last_err = rqst->obj_delete.res;
+			err_msg = "obj_delete_1() error";
+			goto op_err;
+		}
+		break;
 	default:
 		assert(0 == "Invalid request");
 	}
@@ -1202,6 +1226,7 @@ dsos_container_open(
 	if (!cont)
 		return NULL;
 	pthread_mutex_init(&sess->lock, NULL);
+	pthread_cond_init(&sess->cond, NULL);
 	cont->sess = sess;
 	cont->handle_count = sess->client_count;
 	cont->path = strdup(path);
@@ -1218,6 +1243,11 @@ dsos_container_open(
 	return cont;
  err_0:
 	return NULL;
+}
+
+const char *dsos_container_path(dsos_container_t cont)
+{
+	return cont->path;
 }
 
 static inline dsos_schema_t dsos_schema_alloc(dsos_container_t cont)
@@ -1943,13 +1973,30 @@ int dsos_transaction_begin(dsos_container_t cont, struct timespec *timeout)
 	int rc = 0;
 	dsos_session_t sess = cont->sess;
 	struct timespec now;
+	struct timespec until;
+
 	(void)clock_gettime(CLOCK_REALTIME, &now);
+	if (timeout) {
+		until.tv_nsec = now.tv_nsec + timeout->tv_nsec;
+		until.tv_sec = now.tv_sec + timeout->tv_sec + until.tv_nsec/1000000000;
+		until.tv_nsec %= 1000000000;
+	}
 
 	pthread_mutex_lock(&sess->lock);
-	/* Check if any client is in a transaction and error if so */
+again:
+	/* Check if any client is in a transaction */
 	for (client_id = 0; client_id < sess->client_count; client_id++) {
 		if (x_active(&sess->clients[client_id].x_start)) {
-			rc = EBUSY;
+			if (!timeout) {
+				/* block & wait */
+				pthread_cond_wait(&sess->cond, &sess->lock);
+				goto again;
+			}
+			/* block & wait with a timeout */
+			rc = pthread_cond_timedwait(&sess->cond, &sess->lock,
+						    &until);
+			if (0 == rc)
+				goto again;
 			goto out;
 		}
 	}
@@ -2051,6 +2098,7 @@ int dsos_transaction_end(dsos_container_t cont)
 		client->x_end = x_end;
 		x_clear(&client->x_start);
 	}
+	pthread_cond_signal(&sess->cond);
 out:
 	pthread_mutex_unlock(&sess->lock);
 	return rc;
@@ -2223,6 +2271,90 @@ int dsos_obj_update(dsos_container_t cont, sos_obj_t obj)
 	rqst->completion = completion;
 	rqst->kind = REQ_OBJ_UPDATE;
 	rqst->obj_update.obj_entry = obj_e;
+	TAILQ_INSERT_TAIL(&client->x_queue, rqst, x_link);
+	client->request_count += 1.0;
+	pthread_mutex_unlock(&client->x_queue_lock);
+enomem:
+	return rc;
+}
+
+/**
+ * @brief Delete a DSOS object
+ *
+ * The caller must have previously started a
+ * transaction to call this function.
+ *
+ * When the caller calls dsos_transaction_end() all outstanding
+ * object deletes will be flushed to the storage servers.
+ *
+ * @param cont	  The container handle
+ * @param obj	  The local SOS object
+ * @return ENOMEM	There was insufficent local memory to create the object
+ * @return 0		The object is queued for creation
+ */
+int dsos_obj_delete(dsos_container_t cont, sos_obj_t obj)
+{
+	dsos_obj_entry *obj_e;
+	dsos_client_t client;
+	int client_id;
+	int rc = 0;
+	sos_obj_ref_t ref;
+	dsos_client_request_t rqst;
+	/*
+	 * sos_obj_t from a DSOS server is a memory based object that
+	 * uses the sos_obj_ref_t structure and ods_obj_ref_t to keep
+	 * information about the origin of the remote object so that
+	 * this information can be mirrored back to the server so that
+	 * the server can delete it.
+	 *
+	 * The information in particular is the following:
+	 * - client_id : The client handle for the remote container. This
+	 *               identifies which dsosd server provided the object.
+	 * - cont_id   : The remote container's container handle
+	 * - schema_id : The remote container schema_id for this object
+	 * - part_id   : Identifies the partition in the remote container
+	 * - obj_ref   : The ODS object reference in the remote partition
+	 */
+	ref = sos_obj_ref(obj);
+	client_id = ref.dsos_ref.client_id;
+	client = &cont->sess->clients[client_id];
+	obj_e = malloc(sizeof *obj_e);
+	if (!obj_e)
+		goto enomem;
+
+	obj_e->cont_id = ref.dsos_ref.cont_id;
+	obj_e->part_id = ref.dsos_ref.part_id;
+	obj_e->schema_id = ref.dsos_ref.schema_id;
+	obj_e->obj_ref = ref.dsos_ref.obj_ref;
+
+	/*
+	 * No need to actually copy the values but it could be informative
+	 * for debugging.
+	 */
+
+	size_t obj_sz = sos_obj_size(obj);
+	obj_e->value.dsos_obj_value_len = obj_sz;
+	obj_e->value.dsos_obj_value_val = malloc(obj_sz);
+	memcpy(obj_e->value.dsos_obj_value_val, sos_obj_ptr(obj), obj_sz);
+	obj_e->next = NULL;
+
+	pthread_mutex_lock(&client->x_queue_lock);
+
+	dsos_completion_t completion = malloc(sizeof *completion);
+	if (!completion)
+		goto enomem;
+	completion->count = 0;
+	pthread_mutex_init(&completion->lock, NULL);
+	pthread_cond_init(&completion->cond, NULL);
+
+	rqst = malloc(sizeof *rqst);
+	if (!rqst) {
+		free(completion);
+		goto enomem;
+	}
+	rqst->completion = completion;
+	rqst->kind = REQ_OBJ_DELETE;
+	rqst->obj_delete.obj_entry = obj_e;
 	TAILQ_INSERT_TAIL(&client->x_queue, rqst, x_link);
 	client->request_count += 1.0;
 	pthread_mutex_unlock(&client->x_queue_lock);
@@ -2803,7 +2935,10 @@ query_select_complete_fn(dsos_client_t client,
 		derr = RPC_ERROR(request->rpc_err);
 	} else {
 		derr = sres->error;
-		if (derr == 0 && request->query_select.query->schema == NULL) {
+		if (derr == 0) {
+			reset_query_obj_tree(request->query_select.query);
+			if (request->query_select.query->schema != NULL)
+				sos_schema_free(request->query_select.query->schema);
 			request->query_select.query->schema =
 				dsos_schema_from_spec(sres->dsos_query_select_res_u.select.spec);
 			if (!request->query_select.query->schema)

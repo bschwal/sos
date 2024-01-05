@@ -271,7 +271,7 @@ static void session_close(struct dsos_session *client)
 		ods_rbt_del(&client->schema_id_tree, &schema->id_rbn);
 		ods_rbt_del(&client->schema_name_tree, &schema->name_rbn);
 		ods_rbt_del(&client->schema_uuid_tree, &schema->uuid_rbn);
-	// 	sos_schema_free(schema->schema);
+	//	sos_schema_free(schema->schema);
 		free(schema);
 		rbn = ods_rbt_min(&client->schema_id_tree);
 	}
@@ -342,7 +342,7 @@ open_1_svc(char *path, int perm, int mode, dsos_open_res *res,  struct svc_req *
 		return FALSE;
 	}
 	if (euid != 0 || egid != 0) {
- 		/* Create/open the container as a particular user.group */
+		/* Create/open the container as a particular user.group */
 		perm |= SOS_PERM_USER;
 		if (perm & SOS_PERM_CREAT) {
 			sos = sos_container_open(path, perm, mode, euid, egid);
@@ -855,7 +855,7 @@ cache_part(struct dsos_session *client, sos_part_t part)
 	struct ods_rbn *rbn = ods_rbt_find(&client->part_name_tree, name);
 	pthread_mutex_unlock(&client->part_tree_lock);
 	if (rbn)
- 		return container_of(rbn, struct dsos_part, name_rbn);
+		return container_of(rbn, struct dsos_part, name_rbn);
 	dpart = malloc(sizeof *dpart);
 	if (!dpart)
 		return NULL;
@@ -888,12 +888,12 @@ static const char *perm_mask_to_str(uint32_t mask)
 {
 	static char s_[16];
 	char *s;
- 	static struct xlat_perm_s {
+	static struct xlat_perm_s {
 		 int bit;
 		 char c;
 	} translate[] = {
 		{ 0001, 'x' },
-        	{ 0002, 'w' },
+		{ 0002, 'w' },
 		{ 0004, 'r' },
 		{ 0010, 'x' },
 		{ 0020, 'w' },
@@ -908,7 +908,7 @@ static const char *perm_mask_to_str(uint32_t mask)
 	for (i = (sizeof(translate)/sizeof(translate[0])); i; i--) {
 		x = &translate[i];
 		if (0 != (x->bit & mask))
-                	*s = x->c;
+			*s = x->c;
 		else
 			*s = '-';
 		s++;
@@ -1335,7 +1335,67 @@ bool_t obj_delete_1_svc(dsos_obj_array obj_array, int *res, struct svc_req *req)
 {
 	if (!authenticate_request(req, __func__))
 		return FALSE;
-	*res = ENOTSUP;
+	struct dsos_session *client;
+	struct dsos_schema *schema;
+	dsos_obj_entry *obj_e;
+	union sos_obj_ref_s ref;
+	struct dsos_part * part;
+	sos_obj_t obj;
+
+
+	obj_e = obj_array;
+	while (obj_e) {
+		client = get_client(obj_e->cont_id);
+		if (!client) {
+			*res = DSOS_ERR_CLIENT;
+			goto out_0;
+		}
+		if (!client->sos) {
+			*res = DSOS_ERR_CLIENT;
+			goto out_1;
+		}
+		schema = get_schema(client, obj_e->schema_id);
+		if (!schema) {
+			*res = DSOS_ERR_SCHEMA;
+			goto out_1;
+		}
+
+		if (!obj_e->part_id) {
+			*res = DSOS_ERR_PARAMETER;
+			goto out_2;
+		}
+		part = get_part(client, obj_e->part_id);
+		if (!part) {
+			*res = DSOS_ERR_PARAMETER;
+			goto out_2;
+		}
+		clock_gettime(CLOCK_REALTIME, &client->acc_time);
+
+		/* obj from obj_ref */
+		ref.ref.obj = obj_e->obj_ref;
+		sos_part_uuid(part->part, ref.ref.part_uuid);
+		obj = sos_ref_as_obj(client->sos, ref);
+		if (!obj) {
+			*res = ENOENT;
+			goto out_2;
+		}
+
+		sos_obj_remove(obj);
+		sos_obj_delete(obj);
+
+		sos_obj_put(obj);
+		put_part(part);
+
+		/* next object */
+		obj_e = obj_e->next;
+		*res = 0;
+	}
+out_2:
+	put_schema(schema);
+out_1:
+	put_client(client);
+out_0:
+	pthread_mutex_unlock(&client_tree_lock);
 	return TRUE;
 }
 
@@ -1832,7 +1892,6 @@ bool_t query_create_1_svc(dsos_container_id cont_id, dsos_query_options opts, ds
 	query->state = DSOSQ_STATE_INIT;
 	query->cont_id = cont_id;
 	query->handle = get_next_handle();
-	query->ast = ast_create(client->sos, query->handle);
 	ods_rbn_init(&query->rbn, &query->handle);
 	ods_rbt_ins(&client->query_tree, &query->rbn);
 	res->error = 0;
@@ -1870,10 +1929,22 @@ bool_t query_select_1_svc(dsos_container_id cont_id, dsos_query_id query_id,
 		res->dsos_query_select_res_u.error_msg = strdup(err_msg);
 		goto out_0;
 	}
+	if (query->ast)
+		ast_destroy(query->ast);
+	query->ast = ast_create(client->sos, query->handle);
+	if (!query->ast) {
+		res->error = DSOS_ERR_MEMORY;
+		sprintf(err_msg, "Error allocating AST for query id %ld\n", query_id);
+		res->dsos_query_select_res_u.error_msg = strdup(err_msg);
+		goto out_0;
+	}
+
 	rc = ast_parse(query->ast, query_str);
 	res->error = rc;
 	if (rc) {
 		res->dsos_query_select_res_u.error_msg = strdup(query->ast->error_msg);
+		ast_destroy(query->ast);
+		query->ast = NULL;
 	} else {
 		sos_attr_t res_key_attr =
 			sos_schema_attr_by_name(query->ast->result_schema,
@@ -2069,10 +2140,7 @@ bool_t query_next_1_svc(dsos_container_id cont_id, dsos_query_id query_id, dsos_
 		res->dsos_query_next_res_u.error_msg = strdup(err_msg);
 		goto out_0;
 	}
-
-	if (query->ast->result_limit && query->ast->result_count >= query->ast->result_limit)
-		goto empty;
-
+	
 	switch (query->state) {
 	case DSOSQ_STATE_INIT:
 		sprintf(err_msg,
@@ -2100,6 +2168,9 @@ bool_t query_next_1_svc(dsos_container_id cont_id, dsos_query_id query_id, dsos_
 			goto empty;
 		break;
 	case DSOSQ_STATE_NEXT:
+		if (query->ast->result_limit
+		    && query->ast->result_count >= query->ast->result_limit)
+			goto empty;
 		rc = sos_iter_next(query->ast->sos_iter);
 		if (rc)
 			goto empty;
@@ -2127,11 +2198,12 @@ empty:
 static void query_destroy(struct dsos_session *client, struct dsos_query *query)
 {
 
- 	pthread_mutex_lock(&client->query_tree_lock);
+	pthread_mutex_lock(&client->query_tree_lock);
 	ods_rbt_del(&client->query_tree, &query->rbn);
 	pthread_mutex_unlock(&client->query_tree_lock);
 
-	ast_destroy(query->ast);
+	if (query->ast)
+		ast_destroy(query->ast);
 	free(query);
 }
 
